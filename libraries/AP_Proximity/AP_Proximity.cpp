@@ -15,6 +15,7 @@
 
 #include "AP_Proximity.h"
 #include "AP_Proximity_LightWareSF40C.h"
+#include "AP_Proximity_MAV.h"
 #include "AP_Proximity_SITL.h"
 
 extern const AP_HAL::HAL &hal;
@@ -136,14 +137,14 @@ const AP_Param::GroupInfo AP_Proximity::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("2_TYPE", 16, AP_Proximity, _type[1], 0),
 
-    // @Param: _ORIENT
+    // @Param: 2_ORIENT
     // @DisplayName: Second Proximity sensor orientation
     // @Description: Second Proximity sensor orientation
     // @Values: 0:Default,1:Upside Down
     // @User: Standard
     AP_GROUPINFO("2_ORIENT", 17, AP_Proximity, _orientation[1], 0),
 
-    // @Param: _YAW_CORR
+    // @Param: 2_YAW_CORR
     // @DisplayName: Second Proximity sensor yaw correction
     // @Description: Second Proximity sensor yaw correction
     // @Range: -180 180
@@ -251,6 +252,11 @@ void AP_Proximity::detect_instance(uint8_t instance)
             drivers[instance] = new AP_Proximity_LightWareSF40C(*this, state[instance], serial_manager);
             return;
         }
+    }
+    if (type == Proximity_Type_MAV) {
+        state[instance].instance = instance;
+        drivers[instance] = new AP_Proximity_MAV(*this, state[instance]);
+        return;
     }
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
     if (type == Proximity_Type_SITL) {

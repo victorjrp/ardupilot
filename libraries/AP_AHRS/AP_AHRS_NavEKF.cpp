@@ -1013,6 +1013,13 @@ void AP_AHRS_NavEKF::getEkfControlLimits(float &ekfGndSpdLimit, float &ekfNavVel
         EKF3.getEkfControlLimits(ekfGndSpdLimit,ekfNavVelGainScaler);
         break;
 
+#if CONFIG_HAL_BOARD == HAL_BOARD_SITL
+    case EKF_TYPE_SITL:
+        // same as EKF2 for no optical flow
+        ekfGndSpdLimit = 400.0f;
+        ekfNavVelGainScaler = 1.0f;
+        break;
+#endif
     }
 }
 
@@ -1369,9 +1376,10 @@ void AP_AHRS_NavEKF::setTouchdownExpected(bool val)
 
 bool AP_AHRS_NavEKF::getGpsGlitchStatus()
 {
-    nav_filter_status ekf_status;
-    get_filter_status(ekf_status);
-
+    nav_filter_status ekf_status {};
+    if (!get_filter_status(ekf_status)) {
+        return false;
+    }
     return ekf_status.flags.gps_glitching;
 }
 

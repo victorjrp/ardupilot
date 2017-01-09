@@ -59,20 +59,20 @@ waf() {
 # checkout the right version of the tree
 checkout() {
     vehicle="$1"
-    tag="$2"
-    board="$3"
-    frame="$4"
-    echo "Trying checkout $vehicle $tag $board $frame"
+    ctag="$2"
+    cboard="$3"
+    cframe="$4"
+    echo "Trying checkout $vehicle $ctag $cboard $cframe"
     git stash
-    if [ "$tag" = "latest" ]; then
+    if [ "$ctag" = "latest" ]; then
         vtag="master"
     else
-        vtag="$vehicle-$tag"
+        vtag="$vehicle-$ctag"
     fi
 
     # try frame specific tag
-    if [ -n "$frame" ]; then
-        vtag2="$vtag-$frame"
+    if [ -n "$cframe" ]; then
+        vtag2="$vtag-$cframe"
 
         git checkout -f "$vtag2" && {
             echo "Using frame specific tag $vtag2"
@@ -83,7 +83,7 @@ checkout() {
     fi
 
     # try board type specific branch extension
-    vtag2="$vtag"$(board_branch $board)
+    vtag2="$vtag"$(board_branch $cboard)
 
     git checkout -f "$vtag2" && {
         echo "Using board specific tag $vtag2"
@@ -99,7 +99,7 @@ checkout() {
         return 0
     }
 
-    echo "Failed to find tag for $vehicle $tag $board $frame"
+    echo "Failed to find tag for $vehicle $ctag $cboard $cframe"
     return 1
 }
 
@@ -126,10 +126,10 @@ skip_board_waf() {
 }
 
 skip_frame() {
-    board=$1
-    frame=$2
-    if [ "$board" = "bebop" ]; then
-        if [ "$frame" != "quad" ]; then
+    sboard=$1
+    sframe=$2
+    if [ "$sboard" = "bebop" ]; then
+        if [ "$sframe" != "quad" ]; then
             return 0
         fi
     fi
@@ -292,16 +292,30 @@ build_arduplane() {
 build_arducopter() {
     tag="$1"
     echo "Building ArduCopter $tag binaries from $(pwd)"
-    frames="quad tri hexa y6 octa octa-quad heli"
+
+    # work out what frames to build by looking for FRAME_CLASS parameter
+    checkout ArduCopter $tag "" ""
+    if grep -q FRAME_CLASS ArduCopter/Parameters.cpp; then
+        frames="quad tri heli"
+    else
+        frames="quad tri hexa y6 octa octa-quad heli"
+    fi
+
+    echo "Building frames: $frames"
+
+    checkout ArduCopter "latest" "" ""
+    
     for b in erlebrain2 navio navio2 pxf pxfmini bebop; do
+        echo "Building board: $b"
         for f in $frames; do
+            echo "Building frame $f for board $b"
             checkout ArduCopter $tag $b $f || {
                 echo "Failed checkout of ArduCopter $b $tag $f"
                 error_count=$((error_count+1))
                 continue
             }
             skip_board_waf $b && continue
-            echo "Building ArduCopter $b binaries $f"
+            echo "Building ArduCopter $tag $b binaries $f"
             ddir=$binaries/Copter/$hdate/$b-$f
             skip_build $tag $ddir && continue
             skip_frame $b $f && continue
@@ -318,6 +332,7 @@ build_arducopter() {
     done
     pushd ArduCopter
     for f in $frames; do
+        echo "Building frame $f for board PX4"
         checkout ArduCopter $tag PX4 $f || {
             echo "Failed checkout of ArduCopter PX4 $tag $f"
             error_count=$((error_count+1))
@@ -325,7 +340,7 @@ build_arducopter() {
             continue
         }
         rm -rf ../Build.ArduCopter
-        echo "Building ArduCopter PX4-$f binaries"
+        echo "Building ArduCopter $tag PX4-$f binaries"
         ddir="$binaries/Copter/$hdate/PX4-$f"
         skip_build $tag $ddir && continue
         for v in v1 v2 v3 v4; do
@@ -351,7 +366,7 @@ build_rover() {
     echo "Building APMrover2 $tag binaries from $(pwd)"
     pushd APMrover2
     for b in apm1 apm2; do
-        echo "Building APMrover2 $b binaries"
+        echo "Building APMrover2 $tag $b binaries"
         checkout APMrover2 $tag $b "" || continue
         skip_board $b && continue
         ddir=$binaries/Rover/$hdate/$b
@@ -368,7 +383,7 @@ build_rover() {
     done
     popd
     for b in erlebrain2 navio navio2 pxf pxfmini; do
-        echo "Building APMrover2 $b binaries"
+        echo "Building APMrover2 $tag $b binaries"
         checkout APMrover2 $tag $b "" || continue
         skip_board_waf $b && continue
         ddir=$binaries/Rover/$hdate/$b
@@ -382,7 +397,7 @@ build_rover() {
         touch $binaries/Rover/$tag
     done
     pushd APMrover2
-    echo "Building APMrover2 PX4 binaries"
+    echo "Building APMrover2 $tag PX4 binaries"
     ddir=$binaries/Rover/$hdate/PX4
     checkout APMrover2 $tag PX4 "" || {
         checkout APMrover2 "latest" "" ""
@@ -415,7 +430,7 @@ build_antennatracker() {
     echo "Building AntennaTracker $tag binaries from $(pwd)"
     pushd AntennaTracker
     for b in apm2; do
-        echo "Building AntennaTracker $b binaries"
+        echo "Building AntennaTracker $tag $b binaries"
         checkout AntennaTracker $tag $b "" || continue
         ddir=$binaries/AntennaTracker/$hdate/$b
         skip_build $tag $ddir && continue
@@ -437,7 +452,7 @@ build_antennatracker() {
             continue
         }
         skip_board_waf $b && continue
-        echo "Building AntennaTracker $b binaries"
+        echo "Building AntennaTracker $tag $b binaries"
         ddir=$binaries/AntennaTracker/$hdate/$b
         skip_build $tag $ddir && continue
         waf configure --board $b --out $BUILDROOT clean antennatracker || {
@@ -449,7 +464,7 @@ build_antennatracker() {
         touch $binaries/AntennaTracker/$tag
     done
     pushd AntennaTracker
-    echo "Building AntennaTracker PX4 binaries"
+    echo "Building AntennaTracker $tag PX4 binaries"
     ddir=$binaries/AntennaTracker/$hdate/PX4
     checkout AntennaTracker $tag PX4 "" || {
         checkout AntennaTracker "latest" "" ""
