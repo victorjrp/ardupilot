@@ -387,6 +387,7 @@ void AP_Baro::init(void)
 
     case AP_BoardConfig::PX4_BOARD_PIXHAWK:
     case AP_BoardConfig::PX4_BOARD_PHMINI:
+    case AP_BoardConfig::PX4_BOARD_AUAV21:
     case AP_BoardConfig::PX4_BOARD_PH2SLIM:
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
                                           std::move(hal.spi->get_device(HAL_BARO_MS5611_NAME))));
@@ -402,6 +403,14 @@ void AP_Baro::init(void)
     case AP_BoardConfig::PX4_BOARD_PIXRACER:
         ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
                                           std::move(hal.spi->get_device(HAL_BARO_MS5611_SPI_INT_NAME))));
+        break;
+
+    case AP_BoardConfig::PX4_BOARD_AEROFC:
+#ifdef HAL_BARO_MS5607_I2C_BUS
+        ADD_BACKEND(AP_Baro_MS56XX::probe(*this,
+                                          std::move(hal.i2c_mgr->get_device(HAL_BARO_MS5607_I2C_BUS, HAL_BARO_MS5607_I2C_ADDR)),
+                                          AP_Baro_MS56XX::BARO_MS5607));
+#endif
         break;
 
     default:

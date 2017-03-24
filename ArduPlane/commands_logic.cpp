@@ -512,7 +512,8 @@ bool Plane::verify_takeoff()
         const float min_gps_speed = 5;
         if (auto_state.takeoff_speed_time_ms == 0 && 
             gps.status() >= AP_GPS::GPS_OK_FIX_3D && 
-            gps.ground_speed() > min_gps_speed) {
+            gps.ground_speed() > min_gps_speed &&
+            hal.util->safety_switch_state() != AP_HAL::Util::SAFETY_DISARMED) {
             auto_state.takeoff_speed_time_ms = millis();
         }
         if (auto_state.takeoff_speed_time_ms != 0 &&
@@ -746,7 +747,7 @@ bool Plane::verify_RTL()
     update_loiter(abs(g.rtl_radius));
 	if (auto_state.wp_distance <= (uint32_t)MAX(g.waypoint_radius,0) || 
         reached_loiter_target()) {
-			gcs_send_text(MAV_SEVERITY_INFO,"Reached HOME");
+			gcs_send_text(MAV_SEVERITY_INFO,"Reached RTL location");
 			return true;
     } else {
         return false;

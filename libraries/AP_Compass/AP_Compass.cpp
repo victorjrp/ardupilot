@@ -10,6 +10,7 @@
 #include "AP_Compass_BMM150.h"
 #include "AP_Compass_HIL.h"
 #include "AP_Compass_HMC5843.h"
+#include "AP_Compass_IST8310.h"
 #include "AP_Compass_LSM303D.h"
 #include "AP_Compass_LSM9DS1.h"
 #include "AP_Compass_PX4.h"
@@ -504,6 +505,7 @@ void Compass::_detect_backends(void)
     case AP_BoardConfig::PX4_BOARD_PX4V1:
     case AP_BoardConfig::PX4_BOARD_PIXHAWK:
     case AP_BoardConfig::PX4_BOARD_PHMINI:
+    case AP_BoardConfig::PX4_BOARD_AUAV21:
     case AP_BoardConfig::PX4_BOARD_PH2SLIM:
     case AP_BoardConfig::PX4_BOARD_PIXHAWK2:
     case AP_BoardConfig::PX4_BOARD_PIXRACER: {
@@ -516,7 +518,6 @@ void Compass::_detect_backends(void)
         ADD_BACKEND(AP_Compass_HMC5843::probe(*this, hal.i2c_mgr->get_device(0, HAL_COMPASS_HMC5843_I2C_ADDR),
                                               both_i2c_external, both_i2c_external?ROTATION_ROLL_180:ROTATION_YAW_270),
                     AP_Compass_HMC5843::name, both_i2c_external);
-
 #if !HAL_MINIMIZE_FEATURES
 #if 0
         // lis3mdl - this is disabled for now due to an errata on pixhawk2 GPS unit, pending investigation
@@ -539,6 +540,12 @@ void Compass::_detect_backends(void)
         }
         break;
 
+    case AP_BoardConfig::PX4_BOARD_AEROFC:
+#ifdef HAL_COMPASS_IST8310_I2C_BUS
+        ADD_BACKEND(AP_Compass_IST8310::probe(*this, hal.i2c_mgr->get_device(HAL_COMPASS_IST8310_I2C_BUS, HAL_COMPASS_IST8310_I2C_ADDR),
+                                              ROTATION_PITCH_180_YAW_90), AP_Compass_IST8310::name, true);
+#endif
+        break;
     default:
         break;
     }
@@ -573,6 +580,11 @@ void Compass::_detect_backends(void)
                      AP_Compass_AK8963::name, false);
         break;
 
+    case AP_BoardConfig::PX4_BOARD_AUAV21:
+        ADD_BACKEND(AP_Compass_AK8963::probe_mpu9250(*this, 0, ROTATION_ROLL_180_YAW_90),
+                     AP_Compass_AK8963::name, false);
+        break;
+        
     case AP_BoardConfig::PX4_BOARD_PH2SLIM:
         ADD_BACKEND(AP_Compass_AK8963::probe_mpu9250(*this, 0, ROTATION_YAW_270),
                      AP_Compass_AK8963::name, false);

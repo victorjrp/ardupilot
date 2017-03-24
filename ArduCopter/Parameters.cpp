@@ -88,7 +88,7 @@ const AP_Param::Info Copter::var_info[] = {
     // @DisplayName: Takeoff trigger deadzone
     // @Description: Offset from mid stick at which takeoff is triggered
     // @User: Standard
-    // @Range: 0.0 500.0
+    // @Range: 0 500
     // @Increment: 10
     GSCALAR(takeoff_trigger_dz, "PILOT_TKOFF_DZ", THR_DZ_DEFAULT),
 
@@ -693,8 +693,8 @@ const AP_Param::Info Copter::var_info[] = {
 #else
     GOBJECTPTR(attitude_control, "ATC_", AC_AttitudeControl_Multi),
 #endif
-    
-    // @Group: POSCON_
+
+    // @Group: PSC
     // @Path: ../libraries/AC_AttitudeControl/AC_PosControl.cpp
     GOBJECTPTR(pos_control, "PSC", AC_PosControl),
 
@@ -965,7 +965,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("ACRO_THR_MID", 10, ParametersG2, acro_thr_mid, ACRO_THR_MID_DEFAULT),
 
-    // @Group: SYSID_ENFORCE
+    // @Param: SYSID_ENFORCE
     // @DisplayName: GCS sysid enforcement
     // @Description: This controls whether packets from other than the expected GCS system ID will be accepted
     // @Values: 0:NotEnforced,1:Enforced

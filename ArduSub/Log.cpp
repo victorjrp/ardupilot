@@ -157,60 +157,6 @@ void Sub::do_erase_logs(void)
     gcs_send_text(MAV_SEVERITY_INFO, "Log erase complete");
 }
 
-#if AUTOTUNE_ENABLED == ENABLED
-struct PACKED log_AutoTune {
-    LOG_PACKET_HEADER;
-    uint64_t time_us;
-    uint8_t axis;           // roll or pitch
-    uint8_t tune_step;      // tuning PI or D up or down
-    float   meas_target;    // target achieved rotation rate
-    float   meas_min;       // maximum achieved rotation rate
-    float   meas_max;       // maximum achieved rotation rate
-    float   new_gain_rp;    // newly calculated gain
-    float   new_gain_rd;    // newly calculated gain
-    float   new_gain_sp;    // newly calculated gain
-    float   new_ddt;        // newly calculated gain
-};
-
-// Write an Autotune data packet
-void Sub::Log_Write_AutoTune(uint8_t axis, uint8_t tune_step, float meas_target, float meas_min, float meas_max, float new_gain_rp, float new_gain_rd, float new_gain_sp, float new_ddt)
-{
-    struct log_AutoTune pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_AUTOTUNE_MSG),
-        time_us     : AP_HAL::micros64(),
-        axis        : axis,
-        tune_step   : tune_step,
-        meas_target : meas_target,
-        meas_min    : meas_min,
-        meas_max    : meas_max,
-        new_gain_rp : new_gain_rp,
-        new_gain_rd : new_gain_rd,
-        new_gain_sp : new_gain_sp,
-        new_ddt     : new_ddt
-    };
-    DataFlash.WriteBlock(&pkt, sizeof(pkt));
-}
-
-struct PACKED log_AutoTuneDetails {
-    LOG_PACKET_HEADER;
-    uint64_t time_us;
-    float    angle_cd;      // lean angle in centi-degrees
-    float    rate_cds;      // current rotation rate in centi-degrees / second
-};
-
-// Write an Autotune data packet
-void Sub::Log_Write_AutoTuneDetails(float angle_cd, float rate_cds)
-{
-    struct log_AutoTuneDetails pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_AUTOTUNEDETAILS_MSG),
-        time_us     : AP_HAL::micros64(),
-        angle_cd    : angle_cd,
-        rate_cds    : rate_cds
-    };
-    DataFlash.WriteBlock(&pkt, sizeof(pkt));
-}
-#endif
-
 // Write a Current data packet
 void Sub::Log_Write_Current()
 {
@@ -563,31 +509,6 @@ void Sub::Log_Write_Baro(void)
     }
 }
 
-struct PACKED log_ParameterTuning {
-    LOG_PACKET_HEADER;
-    uint64_t time_us;
-    uint8_t  parameter;     // parameter we are tuning, e.g. 39 is CH6_CIRCLE_RATE
-    float    tuning_value;  // normalized value used inside tuning() function
-    int16_t  control_in;    // raw tune input value
-    int16_t  tuning_low;    // tuning low end value
-    int16_t  tuning_high;   // tuning high end value
-};
-
-void Sub::Log_Write_Parameter_Tuning(uint8_t param, float tuning_val, int16_t control_in, int16_t tune_low, int16_t tune_high)
-{
-    struct log_ParameterTuning pkt_tune = {
-        LOG_PACKET_HEADER_INIT(LOG_PARAMTUNE_MSG),
-        time_us        : AP_HAL::micros64(),
-        parameter      : param,
-        tuning_value   : tuning_val,
-        control_in     : control_in,
-        tuning_low     : tune_low,
-        tuning_high    : tune_high
-    };
-
-    DataFlash.WriteBlock(&pkt_tune, sizeof(pkt_tune));
-}
-
 // log EKF origin and ahrs home to dataflash
 void Sub::Log_Write_Home_And_Origin()
 {
@@ -657,14 +578,6 @@ void Sub::Log_Write_GuidedTarget(uint8_t target_type, const Vector3f& pos_target
 
 const struct LogStructure Sub::log_structure[] = {
     LOG_COMMON_STRUCTURES,
-#if AUTOTUNE_ENABLED == ENABLED
-    { LOG_AUTOTUNE_MSG, sizeof(log_AutoTune),
-      "ATUN", "QBBfffffff",       "TimeUS,Axis,TuneStep,Targ,Min,Max,RP,RD,SP,ddt" },
-    { LOG_AUTOTUNEDETAILS_MSG, sizeof(log_AutoTuneDetails),
-      "ATDE", "Qff",          "TimeUS,Angle,Rate" },
-#endif
-    { LOG_PARAMTUNE_MSG, sizeof(log_ParameterTuning),
-      "PTUN", "QBfHHH",          "TimeUS,Param,TunVal,CtrlIn,TunLo,TunHi" },  
     { LOG_OPTFLOW_MSG, sizeof(log_Optflow),       
       "OF",   "QBffff",   "TimeUS,Qual,flowX,flowY,bodyX,bodyY" },
     { LOG_NAV_TUNING_MSG, sizeof(log_Nav_Tuning),       
@@ -715,6 +628,7 @@ void Sub::Log_Write_Vehicle_Startup_Messages()
 {
     // only 200(?) bytes are guaranteed by DataFlash
     DataFlash.Log_Write_Mode(control_mode, control_mode_reason);
+    Log_Write_Home_And_Origin();
 }
 
 
@@ -761,10 +675,6 @@ void Sub::Log_Read(uint16_t log_num, uint16_t start_page, uint16_t end_page) {}
 #endif // CLI_ENABLED == ENABLED
 
 void Sub::do_erase_logs(void) {}
-void Sub::Log_Write_AutoTune(uint8_t axis, uint8_t tune_step, float meas_target, \
-                             float meas_min, float meas_max, float new_gain_rp, \
-                             float new_gain_rd, float new_gain_sp, float new_ddt) {}
-void Sub::Log_Write_AutoTuneDetails(float angle_cd, float rate_cds) {}
 void Sub::Log_Write_Current() {}
 void Sub::Log_Write_Nav_Tuning() {}
 void Sub::Log_Write_Control_Tuning() {}
@@ -780,7 +690,6 @@ void Sub::Log_Write_Data(uint8_t id, uint16_t value) {}
 void Sub::Log_Write_Data(uint8_t id, float value) {}
 void Sub::Log_Write_Error(uint8_t sub_system, uint8_t error_code) {}
 void Sub::Log_Write_Baro(void) {}
-void Sub::Log_Write_Parameter_Tuning(uint8_t param, float tuning_val, int16_t control_in, int16_t tune_low, int16_t tune_high) {}
 void Sub::Log_Write_Home_And_Origin() {}
 void Sub::Log_Sensor_Health() {}
 void Sub::Log_Write_GuidedTarget(uint8_t target_type, const Vector3f& pos_target, const Vector3f& vel_target) {}

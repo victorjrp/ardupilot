@@ -36,6 +36,13 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     // @Increment: 0.001
     // @User: Standard
 
+    // @Param: RAT_RLL_FF
+    // @DisplayName: Roll axis rate controller feed forward
+    // @Description: Roll axis rate controller feed forward
+    // @Range: 0 0.5
+    // @Increment: 0.001
+    // @User: Standard
+
     // @Param: RAT_RLL_FILT
     // @DisplayName: Roll axis rate controller input frequency in Hz
     // @Description: Roll axis rate controller input frequency in Hz
@@ -74,6 +81,13 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     // @Increment: 0.001
     // @User: Standard
 
+    // @Param: RAT_PIT_FF
+    // @DisplayName: Pitch axis rate controller feed forward
+    // @Description: Pitch axis rate controller feed forward
+    // @Range: 0 0.5
+    // @Increment: 0.001
+    // @User: Standard
+
     // @Param: RAT_PIT_FILT
     // @DisplayName: Pitch axis rate controller input frequency in Hz
     // @Description: Pitch axis rate controller input frequency in Hz
@@ -109,6 +123,13 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     // @DisplayName: Yaw axis rate controller D gain
     // @Description: Yaw axis rate controller D gain.  Compensates for short-term change in desired yaw rate vs actual yaw rate
     // @Range: 0.000 0.02
+    // @Increment: 0.001
+    // @User: Standard
+
+    // @Param: RAT_YAW_FF
+    // @DisplayName: Yaw axis rate controller feed forward
+    // @Description: Yaw axis rate controller feed forward
+    // @Range: 0 0.5
     // @Increment: 0.001
     // @User: Standard
 
@@ -234,9 +255,10 @@ void AC_AttitudeControl_Multi::rate_controller_run()
     // move throttle vs attitude mixing towards desired (called from here because this is conveniently called on every iteration)
     update_throttle_rpy_mix();
 
-    _motors.set_roll(rate_target_to_motor_roll(_rate_target_ang_vel.x));
-    _motors.set_pitch(rate_target_to_motor_pitch(_rate_target_ang_vel.y));
-    _motors.set_yaw(rate_target_to_motor_yaw(_rate_target_ang_vel.z));
+    Vector3f gyro_latest = _ahrs.get_gyro_latest();
+    _motors.set_roll(rate_target_to_motor_roll(gyro_latest.x, _rate_target_ang_vel.x));
+    _motors.set_pitch(rate_target_to_motor_pitch(gyro_latest.y, _rate_target_ang_vel.y));
+    _motors.set_yaw(rate_target_to_motor_yaw(gyro_latest.z, _rate_target_ang_vel.z));
 
     control_monitor_update();
 }

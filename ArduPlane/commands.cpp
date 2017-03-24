@@ -111,8 +111,6 @@ void Plane::init_home()
     Log_Write_Home_And_Origin();
     GCS_MAVLINK::send_home_all(gps.location());
 
-    gcs_send_text_fmt(MAV_SEVERITY_INFO, "GPS alt: %lu", (unsigned long)home.alt);
-
     // Save Home to EEPROM
     mission.write_home_to_storage();
 
@@ -136,10 +134,12 @@ void Plane::update_home()
         return;
     }
     if (home_is_set == HOME_SET_NOT_LOCKED) {
-        Location loc = gps.location();
-        ahrs.set_home(loc);
-        Log_Write_Home_And_Origin();
-        GCS_MAVLINK::send_home_all(loc);
+        Location loc;
+        if(ahrs.get_position(loc)) {
+            ahrs.set_home(loc);
+            Log_Write_Home_And_Origin();
+            GCS_MAVLINK::send_home_all(loc);
+        }
     }
     barometer.update_calibration();
 }

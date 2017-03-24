@@ -25,16 +25,13 @@
   and the maximum time they are expected to take (in microseconds)
  */
 const AP_Scheduler::Task Sub::scheduler_tasks[] = {
-    SCHED_TASK(rc_loop,              100,    130),
-    SCHED_TASK(throttle_loop,         50,     75),
+    SCHED_TASK(fifty_hz_loop,         50,     75),
     SCHED_TASK(update_GPS,            50,    200),
 #if OPTFLOW == ENABLED
     SCHED_TASK(update_optical_flow,  200,    160),
 #endif
     SCHED_TASK(update_batt_compass,   10,    120),
-    SCHED_TASK(read_aux_switches,     10,     50),
     SCHED_TASK(auto_disarm_check,     10,     50),
-    SCHED_TASK(auto_trim,             10,     75),
     SCHED_TASK(read_rangefinder,      20,    100),
     SCHED_TASK(update_altitude,       10,    100),
     SCHED_TASK(run_nav_updates,       50,    100),
@@ -51,7 +48,6 @@ const AP_Scheduler::Task Sub::scheduler_tasks[] = {
     SCHED_TASK(gcs_send_deferred,     50,    550),
     SCHED_TASK(gcs_data_stream_send,  50,    550),
     SCHED_TASK(update_mount,          50,     75),
-    SCHED_TASK(camera_tilt_smooth,    50,     50),
     SCHED_TASK(update_trigger,        50,     75),
     SCHED_TASK(ten_hz_logging_loop,   10,    350),
     SCHED_TASK(twentyfive_hz_logging, 25,    110),
@@ -172,15 +168,14 @@ void Sub::loop()
 // Main loop - 400hz
 void Sub::fast_loop()
 {
-
-    // IMU DCM Algorithm
-    // --------------------
-    read_AHRS();
-
     if (control_mode != MANUAL) { //don't run rate controller in manual mode
         // run low level rate controllers that only require IMU data
         attitude_control.rate_controller_run();
     }
+
+    // IMU DCM Algorithm
+    // --------------------
+    read_AHRS();
 
     // send outputs to the motors library
     motors_output();
@@ -191,6 +186,8 @@ void Sub::fast_loop()
 
     // check if ekf has reset target heading
     check_ekf_yaw_reset();
+
+    crash_check(MAIN_LOOP_SECONDS);
 
     // run the attitude controllers
     update_flight_mode();
@@ -212,22 +209,26 @@ void Sub::fast_loop()
     }
 }
 
-// rc_loops - reads user input from transmitter/receiver
-// called at 100hz
-void Sub::rc_loop()
-{
-    // Read radio
-    // -----------------------------------------
-    read_radio();
-    failsafe_manual_control_check();
-}
-
-// throttle_loop - should be run at 50 hz
-// ---------------------------
-void Sub::throttle_loop()
+// 50 Hz tasks
+void Sub::fifty_hz_loop()
 {
     // check auto_armed status
     update_auto_armed();
+
+    // check pilot input failsafe
+    failsafe_manual_control_check();
+
+    // Update servo output
+    RC_Channels::set_pwm_all();
+    SRV_Channels::limit_slew_rate(SRV_Channel::k_mount_tilt, g.cam_slew_limit, 0.02f);
+    SRV_Channels::output_ch_all();
+}
+
+// updates the status of notify
+// should be called at 50hz
+void Sub::update_notify()
+{
+    notify.update();
 }
 
 // update_mount - update camera mount position
@@ -361,28 +362,22 @@ void Sub::three_hz_loop()
     fence_check();
 #endif // AC_FENCE_ENABLED
 
-    update_events();
-
-#if CH6_TUNE_ENABLED == ENABLED
-    // update ch6 in flight tuning
-    tuning();
-#endif
+    ServoRelayEvents.update_events();
 }
 
 // one_hz_loop - runs at 1Hz
 void Sub::one_hz_loop()
 {
+    AP_Notify::flags.pre_arm_check = arming.pre_arm_checks(false);
+    AP_Notify::flags.pre_arm_gps_check = position_ok();
+
     if (should_log(MASK_LOG_ANY)) {
         Log_Write_Data(DATA_AP_STATE, ap.value);
     }
 
-    update_arming_checks();
-
     if (!motors.armed()) {
         // make it possible to change ahrs orientation at runtime during initial config
         ahrs.set_orientation();
-
-        update_using_interlock();
 
         // set all throttle channel settings
         motors.set_throttle_range(channel_throttle->get_radio_min(), channel_throttle->get_radio_max());
@@ -437,67 +432,6 @@ void Sub::update_GPS(void)
                 do_take_picture();
             }
 #endif
-        }
-    }
-}
-
-void Sub::init_simple_bearing()
-{
-    // capture current cos_yaw and sin_yaw values
-    simple_cos_yaw = ahrs.cos_yaw();
-    simple_sin_yaw = ahrs.sin_yaw();
-
-    // initialise super simple heading (i.e. heading towards home) to be 180 deg from simple mode heading
-    super_simple_last_bearing = wrap_360_cd(ahrs.yaw_sensor+18000);
-    super_simple_cos_yaw = simple_cos_yaw;
-    super_simple_sin_yaw = simple_sin_yaw;
-
-    // log the simple bearing to dataflash
-    if (should_log(MASK_LOG_ANY)) {
-        Log_Write_Data(DATA_INIT_SIMPLE_BEARING, ahrs.yaw_sensor);
-    }
-}
-
-// update_simple_mode - rotates pilot input if we are in simple mode
-void Sub::update_simple_mode(void)
-{
-    float rollx, pitchx;
-
-    // exit immediately if no new radio frame or not in simple mode
-    if (ap.simple_mode == 0 || !ap.new_radio_frame) {
-        return;
-    }
-
-    // mark radio frame as consumed
-    ap.new_radio_frame = false;
-
-    if (ap.simple_mode == 1) {
-        // rotate roll, pitch input by -initial simple heading (i.e. north facing)
-        rollx = channel_roll->get_control_in()*simple_cos_yaw - channel_pitch->get_control_in()*simple_sin_yaw;
-        pitchx = channel_roll->get_control_in()*simple_sin_yaw + channel_pitch->get_control_in()*simple_cos_yaw;
-    } else {
-        // rotate roll, pitch input by -super simple heading (reverse of heading to home)
-        rollx = channel_roll->get_control_in()*super_simple_cos_yaw - channel_pitch->get_control_in()*super_simple_sin_yaw;
-        pitchx = channel_roll->get_control_in()*super_simple_sin_yaw + channel_pitch->get_control_in()*super_simple_cos_yaw;
-    }
-
-    // rotate roll, pitch input from north facing to vehicle's perspective
-    channel_roll->set_control_in(rollx*ahrs.cos_yaw() + pitchx*ahrs.sin_yaw());
-    channel_pitch->set_control_in(-rollx*ahrs.sin_yaw() + pitchx*ahrs.cos_yaw());
-}
-
-// update_super_simple_bearing - adjusts simple bearing based on location
-// should be called after home_bearing has been updated
-void Sub::update_super_simple_bearing(bool force_update)
-{
-    // check if we are in super simple mode and at least 10m from home
-    if (force_update || (ap.simple_mode == 2 && home_distance > SUPER_SIMPLE_RADIUS)) {
-        // check the bearing to home has changed by at least 5 degrees
-        if (labs(super_simple_last_bearing - home_bearing) > 500) {
-            super_simple_last_bearing = home_bearing;
-            float angle_rad = radians((super_simple_last_bearing+18000)/100);
-            super_simple_cos_yaw = cosf(angle_rad);
-            super_simple_sin_yaw = sinf(angle_rad);
         }
     }
 }

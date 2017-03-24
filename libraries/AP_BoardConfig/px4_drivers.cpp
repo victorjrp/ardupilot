@@ -322,7 +322,9 @@ void AP_BoardConfig::px4_setup_drivers(void)
     case PX4_BOARD_PIXHAWK2:
     case PX4_BOARD_PIXRACER:
     case PX4_BOARD_PHMINI:
+    case PX4_BOARD_AUAV21:
     case PX4_BOARD_PH2SLIM:
+    case PX4_BOARD_AEROFC:
         break;
     default:
         px4_sensor_error("Unknown board type");
@@ -409,12 +411,14 @@ void AP_BoardConfig::px4_setup_peripherals(void)
         px4_sensor_error("no ADC found");
     }
 
-#ifndef CONFIG_ARCH_BOARD_PX4FMU_V4
+#if HAL_PX4_HAVE_PX4IO
     px4_setup_px4io();
 #endif
 
-#ifdef CONFIG_ARCH_BOARD_PX4FMU_V1
+#if defined(CONFIG_ARCH_BOARD_PX4FMU_V1)
     const char *fmu_mode = "mode_serial";
+#elif defined(CONFIG_ARCH_BOARD_AEROFC_V1)
+    const char *fmu_mode = "mode_rcin";
 #else
     const char *fmu_mode = "mode_pwm4";
 #endif
@@ -453,6 +457,7 @@ bool AP_BoardConfig::spi_check_register(const char *devname, uint8_t regnum, uin
 #define MPU_WHOAMI_MPU60X0  0x68
 #define MPU_WHOAMI_MPU9250  0x71
 #define MPU_WHOAMI_ICM20608 0xaf
+#define MPU_WHOAMI_ICM20602 0x12
 
 #define LSMREG_WHOAMI 0x0f
 #define LSM_WHOAMI_LSM303D 0x49
@@ -475,12 +480,14 @@ void AP_BoardConfig::px4_autodetect(void)
 #elif defined(CONFIG_ARCH_BOARD_PX4FMU_V2)
     if ((spi_check_register(HAL_INS_MPU60x0_EXT_NAME, MPUREG_WHOAMI, MPU_WHOAMI_MPU60X0) ||
          spi_check_register(HAL_INS_MPU9250_EXT_NAME, MPUREG_WHOAMI, MPU_WHOAMI_MPU9250) ||
-         spi_check_register(HAL_INS_ICM20608_EXT_NAME, MPUREG_WHOAMI, MPU_WHOAMI_ICM20608)) &&
+         spi_check_register(HAL_INS_ICM20608_EXT_NAME, MPUREG_WHOAMI, MPU_WHOAMI_ICM20608) ||
+         spi_check_register(HAL_INS_ICM20608_EXT_NAME, MPUREG_WHOAMI, MPU_WHOAMI_ICM20602)) &&
         spi_check_register(HAL_INS_LSM9DS0_EXT_A_NAME, LSMREG_WHOAMI, LSM_WHOAMI_LSM303D)) {
         // Pixhawk2 has LSM303D and MPUxxxx on external bus
         px4.board_type.set(PX4_BOARD_PIXHAWK2);
         hal.console->printf("Detected PIXHAWK2\n");
-    } else if (spi_check_register(HAL_INS_ICM20608_AM_NAME, MPUREG_WHOAMI, MPU_WHOAMI_ICM20608) &&
+    } else if ((spi_check_register(HAL_INS_ICM20608_AM_NAME, MPUREG_WHOAMI, MPU_WHOAMI_ICM20608) ||
+                spi_check_register(HAL_INS_ICM20608_AM_NAME, MPUREG_WHOAMI, MPU_WHOAMI_ICM20602)) &&
                spi_check_register(HAL_INS_MPU9250_NAME, MPUREG_WHOAMI, MPU_WHOAMI_MPU9250)) {
         // PHMINI has an ICM20608 and MPU9250 on sensor bus
         px4.board_type.set(PX4_BOARD_PHMINI);
@@ -488,6 +495,7 @@ void AP_BoardConfig::px4_autodetect(void)
     } else if (spi_check_register(HAL_INS_LSM9DS0_A_NAME, LSMREG_WHOAMI, LSM_WHOAMI_LSM303D) &&
                (spi_check_register(HAL_INS_MPU60x0_NAME, MPUREG_WHOAMI, MPU_WHOAMI_MPU60X0) ||
                 spi_check_register(HAL_INS_ICM20608_NAME, MPUREG_WHOAMI, MPU_WHOAMI_ICM20608) ||
+                spi_check_register(HAL_INS_ICM20608_NAME, MPUREG_WHOAMI, MPU_WHOAMI_ICM20602) ||
                 spi_check_register(HAL_INS_MPU9250_NAME, MPUREG_WHOAMI, MPU_WHOAMI_MPU9250))) {
         // classic or upgraded Pixhawk1
         px4.board_type.set(PX4_BOARD_PIXHAWK);
@@ -499,6 +507,9 @@ void AP_BoardConfig::px4_autodetect(void)
     // only one choice
     px4.board_type.set_and_notify(PX4_BOARD_PIXRACER);    
     hal.console->printf("Detected Pixracer\n");
+#elif defined(CONFIG_ARCH_BOARD_AEROFC_V1)
+    px4.board_type.set_and_notify(PX4_BOARD_AEROFC);
+    hal.console->printf("Detected Aero FC\n");
 #endif
     
 }

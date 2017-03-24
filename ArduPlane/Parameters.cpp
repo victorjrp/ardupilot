@@ -73,7 +73,7 @@ const AP_Param::Info Plane::var_info[] = {
     // @DisplayName: GCS PID tuning mask
     // @Description: bitmask of PIDs to send MAVLink PID_TUNING messages for
     // @User: Advanced
-    // @Bitmask: 0:Roll,1:Pitch,2:Yaw
+    // @Bitmask: 0:Roll,1:Pitch,2:Yaw,3:Steering,4:Landing
     GSCALAR(gcs_pid_mask,           "GCS_PID_MASK",     0),
 
     // @Param: KFF_RDDRMIX
@@ -1194,7 +1194,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
 
     // 3 was used by prototype for servo_channels
     
-    // @Group: SYSID_ENFORCE
+    // @Param: SYSID_ENFORCE
     // @DisplayName: GCS sysid enforcement
     // @Description: This controls whether packets from other than the expected GCS system ID will be accepted
     // @Values: 0:NotEnforced,1:Enforced
@@ -1213,11 +1213,16 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @Path: ../libraries/RC_Channel/RC_Channels.cpp
     AP_SUBGROUPINFO(rc_channels, "RC", 7, ParametersG2, RC_Channels),
     
+    // @Group: SOAR_
+    // @Path: ../libraries/AP_Soaring/AP_Soaring.cpp
+    AP_SUBGROUPINFO(soaring_controller, "SOAR_", 8, ParametersG2, SoaringController),
+  
     AP_GROUPEND
 };
 
 ParametersG2::ParametersG2(void) :
-    ice_control(plane.rpm_sensor, plane.ahrs)
+    ice_control(plane.rpm_sensor, plane.ahrs),
+    soaring_controller(plane.ahrs, plane.TECS_controller, plane.aparm)
 {
     AP_Param::setup_object_defaults(this, var_info);
 }

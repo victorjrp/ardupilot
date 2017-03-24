@@ -325,7 +325,7 @@ const AP_Param::GroupInfo NavEKF2::var_info[] = {
     // @Param: FLOW_DELAY
     // @DisplayName: Optical Flow measurement delay (msec)
     // @Description: This is the number of msec that the optical flow measurements lag behind the inertial measurements. It is the time from the end of the optical flow averaging period and does not include the time delay due to the 100msec of averaging within the flow sensor.
-    // @Range: 0 250
+    // @Range: 0 127
     // @Increment: 10
     // @User: Advanced
     // @Units: milliseconds
@@ -512,7 +512,7 @@ const AP_Param::GroupInfo NavEKF2::var_info[] = {
     // @Param: BCN_DELAY
     // @DisplayName: Range beacon measurement delay (msec)
     // @Description: This is the number of msec that the range beacon measurements lag behind the inertial measurements. It is the time from the end of the optical flow averaging period and does not include the time delay due to the 100msec of averaging within the flow sensor.
-    // @Range: 0 250
+    // @Range: 0 127
     // @Increment: 10
     // @User: Advanced
     // @Units: milliseconds
@@ -585,7 +585,7 @@ void NavEKF2::check_log_write(void)
         logging.log_compass = false;
     }
     if (logging.log_gps) {
-        DataFlash_Class::instance()->Log_Write_GPS(_ahrs->get_gps(), 0, imuSampleTime_us);
+        DataFlash_Class::instance()->Log_Write_GPS(_ahrs->get_gps(), _ahrs->get_gps().primary_sensor(), imuSampleTime_us);
         logging.log_gps = false;
     }
     if (logging.log_baro) {

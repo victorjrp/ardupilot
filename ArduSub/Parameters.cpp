@@ -181,13 +181,6 @@ const AP_Param::Info Sub::var_info[] = {
     // @User: Standard
     GSCALAR(xtrack_angle_limit,"XTRACK_ANG_LIM", 45),
 
-    // @Param: GPS_HDOP_GOOD
-    // @DisplayName: GPS Hdop Good
-    // @Description: GPS Hdop value at or below this value represent a good position.  Used for pre-arm checks
-    // @Range: 100 900
-    // @User: Advanced
-    GSCALAR(gps_hdop_good, "GPS_HDOP_GOOD", GPS_HDOP_GOOD_DEFAULT),
-
     // @Param: MAG_ENABLE
     // @DisplayName: Compass enable/disable
     // @Description: Setting this to Enabled(1) will enable the compass. Setting this to Disabled(0) will disable the compass
@@ -278,88 +271,6 @@ const AP_Param::Info Sub::var_info[] = {
     // @Bitmask: 0:ATTITUDE_FAST,1:ATTITUDE_MED,2:GPS,3:PM,4:CTUN,5:NTUN,6:RCIN,7:IMU,8:CMD,9:CURRENT,10:RCOUT,11:OPTFLOW,12:PID,13:COMPASS,14:INAV,15:CAMERA,17:MOTBATT,18:IMU_FAST,19:IMU_RAW
     // @User: Standard
     GSCALAR(log_bitmask,    "LOG_BITMASK",          DEFAULT_LOG_BITMASK),
-
-    // @Param: ESC_CALIBRATION
-    // @DisplayName: ESC Calibration
-    // @Description: Controls whether ArduSub will enter ESC calibration on the next restart.  Do not adjust this parameter manually.
-    // @User: Advanced
-    // @Values: 0:Normal Start-up, 1:Start-up in ESC Calibration mode if throttle high, 2:Start-up in ESC Calibration mode regardless of throttle, 9:Disabled
-    GSCALAR(esc_calibrate, "ESC_CALIBRATION",       0),
-
-#if CH6_TUNE_ENABLED == ENABLED
-    // @Param: TUNE
-    // @DisplayName: Channel 6 Tuning
-    // @Description: Controls which parameters (normally PID gains) are being tuned with transmitter's channel 6 knob
-    // @User: Standard
-    // @Values: 0:None,1:Stab Roll/Pitch kP,4:Rate Roll/Pitch kP,5:Rate Roll/Pitch kI,21:Rate Roll/Pitch kD,3:Stab Yaw kP,6:Rate Yaw kP,26:Rate Yaw kD,14:Altitude Hold kP,7:Throttle Rate kP,34:Throttle Accel kP,35:Throttle Accel kI,36:Throttle Accel kD,42:Loiter Speed,12:Loiter Pos kP,22:Velocity XY kP,28:Velocity XY kI,10:WP Speed,25:Acro RollPitch kP,40:Acro Yaw kP,13:Heli Ext Gyro,17:OF Loiter kP,18:OF Loiter kI,19:OF Loiter kD,38:Declination,39:Circle Rate,41:RangeFinder Gain,46:Rate Pitch kP,47:Rate Pitch kI,48:Rate Pitch kD,49:Rate Roll kP,50:Rate Roll kI,51:Rate Roll kD,52:Rate Pitch FF,53:Rate Roll FF,54:Rate Yaw FF
-    GSCALAR(radio_tuning, "TUNE",                   0),
-
-    // @Param: TUNE_LOW
-    // @DisplayName: Tuning minimum
-    // @Description: The minimum value that will be applied to the parameter currently being tuned with the transmitter's channel 6 knob
-    // @User: Standard
-    // @Range: 0 32767
-    GSCALAR(radio_tuning_low, "TUNE_LOW",           0),
-
-    // @Param: TUNE_HIGH
-    // @DisplayName: Tuning maximum
-    // @Description: The maximum value that will be applied to the parameter currently being tuned with the transmitter's channel 6 knob
-    // @User: Standard
-    // @Range: 0 32767
-    GSCALAR(radio_tuning_high, "TUNE_HIGH",         1000),
-#endif
-
-#if AUXSW_ENABLED == ENABLED
-    // @Param: CH7_OPT
-    // @DisplayName: Channel 7 option
-    // @Description: Select which function if performed when CH7 is above 1800 pwm
-    // @Values: 0:Do Nothing, 2:Flip, 3:Simple Mode, 4:RTL, 5:Save Trim, 7:Save WP, 9:Camera Trigger, 10:RangeFinder, 11:Fence, 12:ResetToArmedYaw, 13:Super Simple Mode, 14:Acro Trainer, 16:Auto, 17:AutoTune, 18:Land, 19:Gripper, 21:Parachute Enable, 22:Parachute Release, 23:Parachute 3pos, 24:Auto Mission Reset, 25:AttCon Feed Forward, 26:AttCon Accel Limits, 27:Retract Mount, 28:Relay On/Off, 34:Relay2 On/Off, 35:Relay3 On/Off, 36:Relay4 On/Off, 29:Landing Gear, 30:Lost vehicle Sound, 31:Motor Emergency Stop, 32:Motor Interlock, 33:Brake, 37:Throw
-    // @User: Standard
-    GSCALAR(ch7_option, "CH7_OPT",                  AUXSW_DO_NOTHING),
-
-    // @Param: CH8_OPT
-    // @DisplayName: Channel 8 option
-    // @Description: Select which function if performed when CH8 is above 1800 pwm
-    // @Values: 0:Do Nothing, 2:Flip, 3:Simple Mode, 4:RTL, 5:Save Trim, 7:Save WP, 9:Camera Trigger, 10:RangeFinder, 11:Fence, 12:ResetToArmedYaw, 13:Super Simple Mode, 14:Acro Trainer, 16:Auto, 17:AutoTune, 18:Land, 19:Gripper, 21:Parachute Enable, 22:Parachute Release, 23:Parachute 3pos, 24:Auto Mission Reset, 25:AttCon Feed Forward, 26:AttCon Accel Limits, 27:Retract Mount, 28:Relay On/Off, 34:Relay2 On/Off, 35:Relay3 On/Off, 36:Relay4 On/Off, 29:Landing Gear, 30:Lost vehicle Sound, 31:Motor Emergency Stop, 32:Motor Interlock, 33:Brake, 37:Throw
-    // @User: Standard
-    GSCALAR(ch8_option, "CH8_OPT",                  AUXSW_DO_NOTHING),
-
-    // @Param: CH9_OPT
-    // @DisplayName: Channel 9 option
-    // @Description: Select which function if performed when CH9 is above 1800 pwm
-    // @Values: 0:Do Nothing, 2:Flip, 3:Simple Mode, 4:RTL, 5:Save Trim, 7:Save WP, 9:Camera Trigger, 10:RangeFinder, 11:Fence, 12:ResetToArmedYaw, 13:Super Simple Mode, 14:Acro Trainer, 16:Auto, 17:AutoTune, 18:Land, 19:Gripper, 21:Parachute Enable, 22:Parachute Release, 23:Parachute 3pos, 24:Auto Mission Reset, 25:AttCon Feed Forward, 26:AttCon Accel Limits, 27:Retract Mount, 28:Relay On/Off, 34:Relay2 On/Off, 35:Relay3 On/Off, 36:Relay4 On/Off, 29:Landing Gear, 30:Lost vehicle Sound, 31:Motor Emergency Stop, 32:Motor Interlock, 33:Brake, 37:Throw
-    // @User: Standard
-    GSCALAR(ch9_option, "CH9_OPT",                  AUXSW_DO_NOTHING),
-
-    // @Param: CH10_OPT
-    // @DisplayName: Channel 10 option
-    // @Description: Select which function if performed when CH10 is above 1800 pwm
-    // @Values: 0:Do Nothing, 2:Flip, 3:Simple Mode, 4:RTL, 5:Save Trim, 7:Save WP, 9:Camera Trigger, 10:RangeFinder, 11:Fence, 12:ResetToArmedYaw, 13:Super Simple Mode, 14:Acro Trainer, 16:Auto, 17:AutoTune, 18:Land, 19:Gripper, 21:Parachute Enable, 22:Parachute Release, 23:Parachute 3pos, 24:Auto Mission Reset, 25:AttCon Feed Forward, 26:AttCon Accel Limits, 27:Retract Mount, 28:Relay On/Off, 34:Relay2 On/Off, 35:Relay3 On/Off, 36:Relay4 On/Off, 29:Landing Gear, 30:Lost vehicle Sound, 31:Motor Emergency Stop, 32:Motor Interlock, 33:Brake, 37:Throw
-    // @User: Standard
-    GSCALAR(ch10_option, "CH10_OPT",                AUXSW_DO_NOTHING),
-
-    // @Param: CH11_OPT
-    // @DisplayName: Channel 11 option
-    // @Description: Select which function if performed when CH11 is above 1800 pwm
-    // @Values: 0:Do Nothing, 2:Flip, 3:Simple Mode, 4:RTL, 5:Save Trim, 7:Save WP, 9:Camera Trigger, 10:RangeFinder, 11:Fence, 12:ResetToArmedYaw, 13:Super Simple Mode, 14:Acro Trainer, 16:Auto, 17:AutoTune, 18:Land, 19:Gripper, 21:Parachute Enable, 22:Parachute Release, 23:Parachute 3pos, 24:Auto Mission Reset, 25:AttCon Feed Forward, 26:AttCon Accel Limits, 27:Retract Mount, 28:Relay On/Off, 34:Relay2 On/Off, 35:Relay3 On/Off, 36:Relay4 On/Off, 29:Landing Gear, 30:Lost vehicle Sound, 31:Motor Emergency Stop, 32:Motor Interlock, 33:Brake, 37:Throw
-    // @User: Standard
-    GSCALAR(ch11_option, "CH11_OPT",                AUXSW_DO_NOTHING),
-
-    // @Param: CH12_OPT
-    // @DisplayName: Channel 12 option
-    // @Description: Select which function if performed when CH12 is above 1800 pwm
-    // @Values: 0:Do Nothing, 2:Flip, 3:Simple Mode, 4:RTL, 5:Save Trim, 7:Save WP, 9:Camera Trigger, 10:RangeFinder, 11:Fence, 12:ResetToArmedYaw, 13:Super Simple Mode, 14:Acro Trainer, 16:Auto, 17:AutoTune, 18:Land, 19:Gripper, 21:Parachute Enable, 22:Parachute Release, 23:Parachute 3pos, 24:Auto Mission Reset, 25:AttCon Feed Forward, 26:AttCon Accel Limits, 27:Retract Mount, 28:Relay On/Off, 34:Relay2 On/Off, 35:Relay3 On/Off, 36:Relay4 On/Off, 29:Landing Gear, 30:Lost vehicle Sound, 31:Motor Emergency Stop, 32:Motor Interlock, 33:Brake, 37:Throw
-    // @User: Standard
-    GSCALAR(ch12_option, "CH12_OPT",                AUXSW_DO_NOTHING),
-#endif
-
-    // @Param: ARMING_CHECK
-    // @DisplayName: Arming check
-    // @Description: Allows enabling or disabling of pre-arming checks of receiver, accelerometer, barometer, compass and GPS
-    // @Values: 0:Disabled, 1:Enabled, -3:Skip Baro, -5:Skip Compass, -9:Skip GPS, -17:Skip INS, -33:Skip Params/Rangefinder, -65:Skip RC, 127:Skip Voltage
-    // @Bitmask: 0:All,1:Baro,2:Compass,3:GPS,4:INS,5:Parameters+Rangefinder,6:RC,7:Voltage
-    // @User: Standard
-    GSCALAR(arming_check, "ARMING_CHECK",           ARMING_CHECK_NONE),
 
     // @Param: DISARM_DELAY
     // @DisplayName: Disarm delay
@@ -746,6 +657,10 @@ const AP_Param::Info Sub::var_info[] = {
     // @Path: ../libraries/AP_BattMonitor/AP_BattMonitor.cpp
     GOBJECT(battery,                "BATT",         AP_BattMonitor),
 
+    // @Group: ARMING_
+    // @Path: AP_Arming_Sub.cpp,../libraries/AP_Arming/AP_Arming.cpp
+    GOBJECT(arming, "ARMING_", AP_Arming_Sub),
+
     // @Group: BRD_
     // @Path: ../libraries/AP_BoardConfig/AP_BoardConfig.cpp
     GOBJECT(BoardConfig,            "BRD_",       AP_BoardConfig),
@@ -836,40 +751,18 @@ const AP_Param::Info Sub::var_info[] = {
     GOBJECT(rpm_sensor, "RPM", AP_RPM),
 #endif
 
-#if AUTOTUNE_ENABLED == ENABLED
-    // @Param: AUTOTUNE_AXES
-    // @DisplayName: Autotune axis bitmask
-    // @Description: 1-byte bitmap of axes to autotune
-    // @Values: 7:All,1:Roll Only,2:Pitch Only,4:Yaw Only,3:Roll and Pitch,5:Roll and Yaw,6:Pitch and Yaw
-    // @Bitmask: 0:Roll,1:Pitch,2:Yaw
-    // @User: Standard
-    GSCALAR(autotune_axis_bitmask, "AUTOTUNE_AXES", 7),  // AUTOTUNE_AXIS_BITMASK_DEFAULT
-
-    // @Param: AUTOTUNE_AGGR
-    // @DisplayName: Autotune aggressiveness
-    // @Description: Autotune aggressiveness. Defines the bounce back used to detect size of the D term.
-    // @Range: 0.05 0.10
-    // @User: Standard
-    GSCALAR(autotune_aggressiveness, "AUTOTUNE_AGGR", 0.1f),
-
-    // @Param: AUTOTUNE_MIN_D
-    // @DisplayName: AutoTune minimum D
-    // @Description: Defines the minimum D gain
-    // @Range: 0.001 0.006
-    // @User: Standard
-    GSCALAR(autotune_min_d, "AUTOTUNE_MIN_D", 0.001f),
-#endif
-
     // @Group: NTF_
     // @Path: ../libraries/AP_Notify/AP_Notify.cpp
     GOBJECT(notify, "NTF_",  AP_Notify),
 
     // @Param: TERRAIN_FOLLOW
     // @DisplayName: Terrain Following use control
-    // @Description: This enables terrain following for RTL and LAND flight modes. To use this option TERRAIN_ENABLE must be 1 and the GCS must  support sending terrain data to the aircraft.  In RTL the RTL_ALT will be considered a height above the terrain.  In LAND mode the vehicle will slow to LAND_SPEED 10m above terrain (instead of 10m above home).  This parameter does not affect AUTO and Guided which use a per-command flag to determine if the height is above-home, absolute or above-terrain.
-    // @Values: 0:Do Not Use in RTL and Land,1:Use in RTL and Land
+    // @Description: This enables terrain following for RTL and SURFACE flight modes. To use this option TERRAIN_ENABLE must be 1 and the GCS must  support sending terrain data to the aircraft.  In RTL the RTL_ALT will be considered a height above the terrain.  In LAND mode the vehicle will slow to LAND_SPEED 10m above terrain (instead of 10m above home).  This parameter does not affect AUTO and Guided which use a per-command flag to determine if the height is above-home, absolute or above-terrain.
+    // @Values: 0:Do Not Use in RTL and SURFACE,1:Use in RTL and SURFACE
     // @User: Standard
     GSCALAR(terrain_follow, "TERRAIN_FOLLOW", 0),
+
+    GSCALAR(cam_slew_limit, "CAM_SLEW_LIMIT", 45.0),
 
     // @Group:
     // @Path: Parameters.cpp
@@ -958,6 +851,15 @@ void Sub::load_parameters(void)
 
     AP_Param::set_default_by_name("BRD_SAFETYENABLE", 0);
     AP_Param::set_default_by_name("GND_EXT_BUS", 1);
+    AP_Param::set_default_by_name("ARMING_CHECK",
+            AP_Arming::ARMING_CHECK_BARO |
+            AP_Arming::ARMING_CHECK_COMPASS |
+            AP_Arming::ARMING_CHECK_INS |
+            AP_Arming::ARMING_CHECK_RC |
+            AP_Arming::ARMING_CHECK_VOLTAGE |
+            AP_Arming::ARMING_CHECK_BATTERY |
+            AP_Arming::ARMING_CHECK_LOGGING);
+    AP_Param::set_default_by_name("CIRCLE_RATE", 2.0f);
 }
 
 void Sub::convert_old_parameters(void)

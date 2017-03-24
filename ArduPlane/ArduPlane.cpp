@@ -76,6 +76,7 @@ const AP_Scheduler::Task Plane::scheduler_tasks[] = {
     SCHED_TASK(Log_Write_Fast,         25,    300),
     SCHED_TASK(update_logging1,        10,    300),
     SCHED_TASK(update_logging2,        10,    300),
+    SCHED_TASK(update_soaring,         50,    400),
     SCHED_TASK(parachute_check,        10,    200),
     SCHED_TASK(terrain_update,         10,    200),
     SCHED_TASK(update_is_flying_5Hz,    5,    100),
@@ -559,7 +560,7 @@ void Plane::handle_auto_mode(void)
         // allow landing to restrict the roll limits
         nav_roll_cd = landing.constrain_roll(nav_roll_cd, g.level_roll_limit*100UL);
 
-        if (landing.is_complete()) {
+        if (landing.is_throttle_suppressed()) {
             // if landing is considered complete throttle is never allowed, regardless of landing type
             SRV_Channels::set_output_scaled(SRV_Channel::k_throttle, 0);
         } else {
@@ -950,7 +951,6 @@ void Plane::update_flight_stage(void)
                 } else {
                     set_flight_stage(AP_Vehicle::FixedWing::FLIGHT_LAND);
                 }
-
             } else if (quadplane.in_assisted_flight()) {
                 set_flight_stage(AP_Vehicle::FixedWing::FLIGHT_VTOL);
             } else {

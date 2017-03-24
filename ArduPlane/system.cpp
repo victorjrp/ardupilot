@@ -139,6 +139,8 @@ void Plane::init_ardupilot()
     // setup any board specific drivers
     BoardConfig.init();
 
+    relay.init();
+
     // initialise notify system
     notify.init(false);
     notify_flight_mode(control_mode);
@@ -216,8 +218,6 @@ void Plane::init_ardupilot()
 
     init_rc_in();               // sets up rc channels from radio
 
-    relay.init();
-
 #if MOUNT == ENABLED
     // initialise camera mount
     camera_mount.init(&DataFlash, serial_manager);
@@ -275,11 +275,11 @@ void Plane::startup_ground(void)
 {
     set_mode(INITIALISING, MODE_REASON_UNKNOWN);
 
-    gcs_send_text(MAV_SEVERITY_INFO,"<startup_ground> Ground start");
-
 #if (GROUND_START_DELAY > 0)
-    gcs_send_text(MAV_SEVERITY_NOTICE,"<startup_ground> With delay");
+    gcs_send_text(MAV_SEVERITY_NOTICE,"Ground start with delay");
     delay(GROUND_START_DELAY * 1000);
+#else
+    gcs_send_text(MAV_SEVERITY_INFO,"Ground start");
 #endif
 
     //INS ground start
@@ -312,7 +312,7 @@ void Plane::startup_ground(void)
     ins.set_raw_logging(should_log(MASK_LOG_IMU_RAW));
     ins.set_dataflash(&DataFlash);
 
-    gcs_send_text(MAV_SEVERITY_INFO,"Ready to fly");
+    gcs_send_text(MAV_SEVERITY_INFO,"Ground start complete");
 }
 
 enum FlightMode Plane::get_previous_mode() {
@@ -417,12 +417,20 @@ void Plane::set_mode(enum FlightMode mode, mode_reason_t reason)
         auto_navigation_mode = false;
         cruise_state.locked_heading = false;
         cruise_state.lock_timer_ms = 0;
+        
+        // for ArduSoar soaring_controller
+        g2.soaring_controller.init_cruising();
+        
         set_target_altitude_current();
         break;
 
     case FLY_BY_WIRE_B:
         auto_throttle_mode = true;
         auto_navigation_mode = false;
+        
+        // for ArduSoar soaring_controller
+        g2.soaring_controller.init_cruising();
+
         set_target_altitude_current();
         break;
 
@@ -444,6 +452,8 @@ void Plane::set_mode(enum FlightMode mode, mode_reason_t reason)
         next_WP_loc = prev_WP_loc = current_loc;
         // start or resume the mission, based on MIS_AUTORESET
         mission.start_or_resume();
+		
+        g2.soaring_controller.init_cruising();
         break;
 
     case RTL:
@@ -457,6 +467,13 @@ void Plane::set_mode(enum FlightMode mode, mode_reason_t reason)
         auto_throttle_mode = true;
         auto_navigation_mode = true;
         do_loiter_at_location();
+		
+        if (g2.soaring_controller.is_active() &&
+            g2.soaring_controller.suppress_throttle()) {
+			g2.soaring_controller.init_thermalling();
+			g2.soaring_controller.get_target(next_WP_loc); // ahead on flight path
+		}
+		
         break;
 
     case AVOID_ADSB:

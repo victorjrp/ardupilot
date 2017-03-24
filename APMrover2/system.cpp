@@ -273,14 +273,20 @@ void Rover::set_mode(enum mode mode)
         return;
     }
 
-    // If we are changing out of AUTO mode reset the loiter timer
+    // If we are changing out of AUTO mode reset the loiter timer and stop current mission
     if (control_mode == AUTO) {
         loiter_start_time = 0;
+        if (mission.state() == AP_Mission::MISSION_RUNNING) {
+            mission.stop();
+        }
     }
 
     control_mode = mode;
     throttle_last = 0;
     throttle = 500;
+    if (!in_auto_reverse) {
+        set_reverse(false);
+    }
     g.pidSpeedThrottle.reset_I();
 
 #if FRSKY_TELEM_ENABLED == ENABLED

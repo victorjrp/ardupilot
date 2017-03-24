@@ -45,10 +45,6 @@ bool Sub::set_mode(control_mode_t mode, mode_reason_t reason)
         success = circle_init(ignore_checks);
         break;
 
-    case VELHOLD:
-        success = velhold_init(ignore_checks);
-        break;
-
     case GUIDED:
         success = guided_init(ignore_checks);
         break;
@@ -56,12 +52,6 @@ bool Sub::set_mode(control_mode_t mode, mode_reason_t reason)
     case SURFACE:
         success = surface_init(ignore_checks);
         break;
-
-#if AUTOTUNE_ENABLED == ENABLED
-    case AUTOTUNE:
-        success = autotune_init(ignore_checks);
-        break;
-#endif
 
 #if POSHOLD_ENABLED == ENABLED
     case POSHOLD:
@@ -138,10 +128,6 @@ void Sub::update_flight_mode()
         circle_run();
         break;
 
-    case VELHOLD:
-        velhold_run();
-        break;
-
     case GUIDED:
         guided_run();
         break;
@@ -149,12 +135,6 @@ void Sub::update_flight_mode()
     case SURFACE:
         surface_run();
         break;
-
-#if AUTOTUNE_ENABLED == ENABLED
-    case AUTOTUNE:
-        autotune_run();
-        break;
-#endif
 
 #if POSHOLD_ENABLED == ENABLED
     case POSHOLD:
@@ -174,12 +154,6 @@ void Sub::update_flight_mode()
 // exit_mode - high level call to organise cleanup as a flight mode is exited
 void Sub::exit_mode(control_mode_t old_control_mode, control_mode_t new_control_mode)
 {
-#if AUTOTUNE_ENABLED == ENABLED
-    if (old_control_mode == AUTOTUNE) {
-        autotune_stop();
-    }
-#endif
-
     // stop mission when we leave auto mode
     if (old_control_mode == AUTO) {
         if (mission.state() == AP_Mission::MISSION_RUNNING) {
@@ -197,7 +171,6 @@ bool Sub::mode_requires_GPS(control_mode_t mode)
     switch (mode) {
     case AUTO:
     case GUIDED:
-    case VELHOLD:
     case CIRCLE:
     case POSHOLD:
         return true;
@@ -227,7 +200,7 @@ bool Sub::mode_has_manual_throttle(control_mode_t mode)
 //  arming_from_gcs should be set to true if the arming request comes from the ground station
 bool Sub::mode_allows_arming(control_mode_t mode, bool arming_from_gcs)
 {
-    if (mode_has_manual_throttle(mode) || mode == VELHOLD || mode == ALT_HOLD || mode == POSHOLD || (arming_from_gcs && mode == GUIDED)) {
+    if (mode_has_manual_throttle(mode) || mode == ALT_HOLD || mode == POSHOLD || (arming_from_gcs && mode == GUIDED)) {
         return true;
     }
     return false;
@@ -272,20 +245,11 @@ void Sub::print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
     case GUIDED:
         port->print("GUIDED");
         break;
-    case VELHOLD:
-        port->print("VELHOLD");
-        break;
     case CIRCLE:
         port->print("CIRCLE");
         break;
     case SURFACE:
         port->print("SURFACE");
-        break;
-    case OF_LOITER:
-        port->print("OF_LOITER");
-        break;
-    case AUTOTUNE:
-        port->print("AUTOTUNE");
         break;
     case POSHOLD:
         port->print("POSHOLD");

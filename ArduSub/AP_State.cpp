@@ -38,26 +38,6 @@ void Sub::set_auto_armed(bool b)
 }
 
 // ---------------------------------------------
-void Sub::set_simple_mode(uint8_t b)
-{
-    if (ap.simple_mode != b) {
-        if (b == 0) {
-            Log_Write_Event(DATA_SET_SIMPLE_OFF);
-            gcs().send_statustext(MAV_SEVERITY_INFO, 0XFF, "SIMPLE mode off");
-        } else if (b == 1) {
-            Log_Write_Event(DATA_SET_SIMPLE_ON);
-            gcs().send_statustext(MAV_SEVERITY_INFO,  0XFF, "SIMPLE mode on");
-        } else {
-            // initialise super simple heading
-            update_super_simple_bearing(true);
-            Log_Write_Event(DATA_SET_SUPERSIMPLE_ON);
-            gcs().send_statustext(MAV_SEVERITY_INFO,  0XFF, "SUPERSIMPLE mode on");
-        }
-        ap.simple_mode = b;
-    }
-}
-
-// ---------------------------------------------
 void Sub::set_failsafe_battery(bool b)
 {
     failsafe.battery = b;
@@ -72,19 +52,6 @@ void Sub::set_pre_arm_check(bool b)
         ap.pre_arm_check = b;
         AP_Notify::flags.pre_arm_check = b;
     }
-}
-
-void Sub::set_pre_arm_rc_check(bool b)
-{
-    if (ap.pre_arm_rc_check != b) {
-        ap.pre_arm_rc_check = b;
-    }
-}
-
-void Sub::update_using_interlock()
-{
-    // check if we are using motor interlock control on an aux switch
-    ap.using_interlock = check_if_auxsw_mode_used(AUXSW_MOTOR_INTERLOCK);
 }
 
 void Sub::set_motor_emergency_stop(bool b)

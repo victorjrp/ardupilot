@@ -69,6 +69,7 @@ public:
         k_param_serial_manager, // Serial ports, AP_SerialManager
         k_param_notify, // Notify Library, AP_Notify
         k_param_cli_enabled, // Old (deprecated) command line interface
+        k_param_arming, // Arming checks
 
 
         // Sensor objects
@@ -185,19 +186,17 @@ public:
 
         // Misc Sub settings
         k_param_log_bitmask = 165,
-        k_param_arming_check,
+        k_param_arming_check, // deprecated, remove
         k_param_angle_max,
         k_param_rangefinder_gain,
-        k_param_gps_hdop_good,
-        k_param_wp_yaw_behavior,
+        k_param_wp_yaw_behavior = 170,
         k_param_xtrack_angle_limit, // Angle limit for crosstrack correction in Auto modes (degrees)
         k_param_pilot_velocity_z_max,
         k_param_pilot_accel_z,
         k_param_compass_enabled,
         k_param_surface_depth,
         k_param_rc_speed, // Main output pwm frequency
-        k_param_esc_calibrate, // Boot-time ESC calibration behavior
-        k_param_gcs_pid_mask,
+        k_param_gcs_pid_mask = 178,
         k_param_throttle_filt,
         k_param_throttle_deadzone, // Used in auto-throttle modes
         k_param_disarm_delay,
@@ -215,30 +214,14 @@ public:
         k_param_acro_balance_roll,
         k_param_acro_balance_pitch,
 
-
-        // AUX switch options
-        k_param_ch7_option, // Disabled
-        k_param_ch8_option, // Disabled
-        k_param_ch9_option, // Disabled
-        k_param_ch10_option, // Disabled
-        k_param_ch11_option, // Disabled
-        k_param_ch12_option, // Disabled
-
         // RPM Sensor
-        k_param_rpm_sensor, // Disabled
+        k_param_rpm_sensor = 232, // Disabled
 
         // RC_Mapper Library
         k_param_rcmap, // Disabled
 
-        // CH6 Tuning
-        k_param_radio_tuning, // Disabled
-        k_param_radio_tuning_high, // Disabled
-        k_param_radio_tuning_low, // Disabled
+        k_param_cam_slew_limit = 237,
 
-        // Autotune parameters
-        k_param_autotune_axis_bitmask, // Disabled
-        k_param_autotune_aggressiveness, // Disabled
-        k_param_autotune_min_d, // Disabled
     };
 
     AP_Int16        format_version;
@@ -270,8 +253,6 @@ public:
 
     AP_Int8         xtrack_angle_limit;
 
-    AP_Int16        gps_hdop_good;              // GPS Hdop value at or below this value represent a good position
-
     AP_Int8         compass_enabled;
 
     AP_Int8         wp_yaw_behavior;            // controls how the autopilot controls yaw during missions
@@ -298,19 +279,7 @@ public:
     // Misc
     //
     AP_Int32        log_bitmask;
-    AP_Int8         esc_calibrate;
-#if CH6_TUNE_ENABLED == ENABLED
-    AP_Int8         radio_tuning;
-    AP_Int16        radio_tuning_high;
-    AP_Int16        radio_tuning_low;
-#endif
-    AP_Int8         ch7_option;
-    AP_Int8         ch8_option;
-    AP_Int8         ch9_option;
-    AP_Int8         ch10_option;
-    AP_Int8         ch11_option;
-    AP_Int8         ch12_option;
-    AP_Int8         arming_check;
+
     AP_Int8         disarm_delay;
 
     AP_Int8         fs_ekf_action;
@@ -367,16 +336,10 @@ public:
     AC_P            p_pos_xy;
     AC_P            p_alt_hold;
 
-    // Autotune
-#if AUTOTUNE_ENABLED == ENABLED
-    AP_Int8                 autotune_axis_bitmask;
-    AP_Float                autotune_aggressiveness;
-    AP_Float                autotune_min_d;
-#endif
-
     AP_Float                surface_depth;
     AP_Int8                 frame_configuration;
 
+    AP_Float cam_slew_limit;
     // Note: keep initializers here in the same order as they are declared
     // above.
     Parameters() :
